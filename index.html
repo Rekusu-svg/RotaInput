@@ -1,53 +1,83 @@
-<script>
-    function submitShifts() {
-        const accessToken = localStorage.getItem("google_access_token");
-        if (!accessToken) {
-            alert("Please sign in first!");
-            return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Calendar</title>
+    <script defer>
+        let selectedDays = {};
+        let weekDates = [];
+        const shiftOptions = ["", "15:00-cl", "17:00-cl"];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            generateWeek();
+            document.querySelectorAll(".day").forEach(day => {
+                day.addEventListener("click", () => {
+                    const dayIndex = day.getAttribute("data-index");
+                    selectedDays[dayIndex] = (selectedDays[dayIndex] || 0) + 1;
+                    if (selectedDays[dayIndex] >= shiftOptions.length) {
+                        delete selectedDays[dayIndex];
+                    }
+                    updateDayDisplay(day, dayIndex);
+                });
+            });
+        });
+
+        function updateDayDisplay(day, index) {
+            const shift = shiftOptions[selectedDays[index] || 0];
+            day.classList.toggle("selected", shift !== "");
+            day.querySelector(".timeslot").textContent = shift ? `Shift: ${shift}` : "";
         }
 
-        const timeZone = "America/New_York";
-        const calendarId = "primary"; // Replace with your calendar ID if needed
+        function generateWeek() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const diff = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - diff);
 
-        Object.keys(selectedDays).forEach(index => {
-            const shift = shiftOptions[selectedDays[index]];
-            const dateString = weekDates[index];
+            const days = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+            const calendar = document.querySelector(".calendar");
+            calendar.innerHTML = "";
+            weekDates = [];
 
-            if (!shift) {
-                // Delete existing events
-                fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?q=Work Shift&timeMin=${dateString}T00:00:00Z&timeMax=${dateString}T23:59:59Z`, {
-                    method: "GET",
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    data.items.forEach(event => {
-                        fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${event.id}`, {
-                            method: "DELETE",
-                            headers: { Authorization: `Bearer ${accessToken}` }
-                        }).then(() => console.log(`Deleted shift on ${dateString}`));
-                    });
-                });
-            } else {
-                // Insert new event
-                const startTime = shift.split("-")[0] + ":00";
-                const event = {
-                    summary: "Work Shift",
-                    start: { dateTime: `${dateString}T${startTime}-05:00`, timeZone: timeZone },
-                    end: { dateTime: `${dateString}T23:00:00-05:00`, timeZone: timeZone }
-                };
+            days.forEach((day, index) => {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + index);
+                weekDates.push(date.toISOString().split('T')[0]);
+                const dayDiv = document.createElement("div");
+                dayDiv.classList.add("day");
+                dayDiv.setAttribute("data-index", index);
+                dayDiv.innerHTML = `<strong>${day}</strong><br>${date.toDateString()}<br><span class="timeslot"></span>`;
+                calendar.appendChild(dayDiv);
+            });
+        }
 
-                fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(event)
-                }).then(response => response.json())
-                .then(data => alert(`Shift added for ${dateString}`))
-                .catch(error => alert("Failed to add shift: " + error));
-            }
-        });
-    }
-</script>
+        function submitShifts() {
+            Object.keys(selectedDays).forEach(index => {
+                const shift = shiftOptions[selectedDays[index]];
+                const dateString = weekDates[index];
+                if (shift) {
+                    const startTime = shift.split("-")[0] + ":00";
+                    const endTime = "23:00:00";
+                    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Work+Shift&dates=${dateString}T${startTime}/${dateString}T${endTime}`;
+                    window.open(googleCalendarUrl, "_blank");
+                }
+            });
+        }
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .calendar { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 20px; }
+        .day { padding: 15px; border: 1px solid #ccc; cursor: pointer; width: 200px; text-align: center; }
+        .selected { background-color: #4CAF50; color: white; }
+        .timeslot { font-size: 14px; display: block; margin-top: 5px; color: #000; }
+        button { margin-top: 20px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>Select Workdays for This Week</h1>
+    <div class="calendar"></div>
+    <button onclick="submitShifts()">Submit to Google Calendar</button>
+</body>
+</html>
