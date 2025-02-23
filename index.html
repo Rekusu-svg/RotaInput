@@ -54,21 +54,30 @@
         }
 
         function submitShifts() {
-            Object.keys(selectedDays).forEach(index => {
-                const shift = shiftOptions[selectedDays[index]];
-                const date = new Date(weekDates[index]); // Ensure we use a valid Date object
-                if (shift) {
-                    const startTime = shift.split("-")[0] + ":00";
-                    const endTime = "23:00:00";
-                    
-                    // Format date as YYYYMMDD
-                    const formattedDate = date.toISOString().split('T')[0].replace(/-/g, "");
+    Object.keys(selectedDays).forEach(index => {
+        const shift = shiftOptions[selectedDays[index]];
+        const date = new Date(weekDates[index]); // Convert string to Date object properly
+        
+        if (shift) {
+            const startTime = shift.split("-")[0] + ":00";
+            const endTime = "23:00:00";
 
-                    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Work+Shift&dates=${formattedDate}T${startTime}/${formattedDate}T${endTime}`;
-                    window.open(googleCalendarUrl, "_blank");
-                }
-            });
+            // Format date as YYYYMMDD without dashes
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Ensure two-digit format
+            const day = String(date.getDate()).padStart(2, '0'); // Ensure two-digit format
+            const formattedDate = `${year}${month}${day}`;
+
+            console.log(`Formatted Date: ${formattedDate}`); // Debugging
+
+            const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Work+Shift&dates=${formattedDate}T${startTime}/${formattedDate}T${endTime}`;
+            console.log(`Google Calendar URL: ${googleCalendarUrl}`); // Debugging
+
+            window.open(googleCalendarUrl, "_blank");
         }
+    });
+}
+
     </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
