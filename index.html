@@ -60,12 +60,6 @@
 
         if (shift) {
             let [startHour, startMinute] = shift.split("-")[0].split(":").map(Number);
-            startMinute -= 10; // Subtract 10 minutes
-
-            if (startMinute < 0) {
-                startMinute += 60;
-                startHour -= 1;
-            }
 
             const endTime = "23:00:00"; // Shift end time remains unchanged
 
