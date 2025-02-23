@@ -56,11 +56,15 @@
         function submitShifts() {
             Object.keys(selectedDays).forEach(index => {
                 const shift = shiftOptions[selectedDays[index]];
-                const dateString = weekDates[index];
+                const date = new Date(weekDates[index]); // Ensure we use a valid Date object
                 if (shift) {
                     const startTime = shift.split("-")[0] + ":00";
                     const endTime = "23:00:00";
-                    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Work+Shift&dates=${dateString}T${startTime}/${dateString}T${endTime}`;
+                    
+                    // Format date as YYYYMMDD
+                    const formattedDate = date.toISOString().split('T')[0].replace(/-/g, "");
+
+                    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Work+Shift&dates=${formattedDate}T${startTime}/${formattedDate}T${endTime}`;
                     window.open(googleCalendarUrl, "_blank");
                 }
             });
