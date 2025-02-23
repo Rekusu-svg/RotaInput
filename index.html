@@ -21,7 +21,6 @@
                     updateDayDisplay(day, dayIndex);
                 });
             });
-            handleGoogleResponse();
         });
 
         function updateDayDisplay(day, index) {
@@ -54,73 +53,19 @@
             });
         }
 
-        function redirectToGoogle() {
-            const clientId = "YOUR_CLIENT_ID";
-            const redirectUri = "https://your-username.github.io/shift-calendar/";
-            const scope = encodeURIComponent("https://www.googleapis.com/auth/calendar.events");
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&include_granted_scopes=true`;
-            
-            window.location.href = authUrl;
-        }
-
-        function handleGoogleResponse() {
-            const params = new URLSearchParams(window.location.hash.substring(1));
-            const accessToken = params.get("access_token");
-            
-            if (accessToken) {
-                localStorage.setItem("google_access_token", accessToken);
-                alert("Google Auth Successful! You can now add shifts.");
-            }
-        }
-
         function submitShifts() {
-            const accessToken = localStorage.getItem("google_access_token");
-            if (!accessToken) {
-                alert("Please sign in first!");
-                return;
-            }
-
-            const timeZone = "America/New_York";
-            const calendarId = "primary";
-
+            const eventData = [];
             Object.keys(selectedDays).forEach(index => {
                 const shift = shiftOptions[selectedDays[index]];
                 const dateString = weekDates[index];
-
-                if (!shift) {
-                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?q=Work Shift&timeMin=${dateString}T00:00:00Z&timeMax=${dateString}T23:59:59Z`, {
-                        method: "GET",
-                        headers: { Authorization: `Bearer ${accessToken}` }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        data.items.forEach(event => {
-                            fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${event.id}`, {
-                                method: "DELETE",
-                                headers: { Authorization: `Bearer ${accessToken}` }
-                            }).then(() => console.log(`Deleted shift on ${dateString}`));
-                        });
-                    });
-                } else {
-                    const startTime = shift.split("-")[0] + ":00";
-                    const event = {
-                        summary: "Work Shift",
-                        start: { dateTime: `${dateString}T${startTime}-05:00`, timeZone: timeZone },
-                        end: { dateTime: `${dateString}T23:00:00-05:00`, timeZone: timeZone }
-                    };
-
-                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(event)
-                    }).then(response => response.json())
-                    .then(data => alert(`Shift added for ${dateString}`))
-                    .catch(error => alert("Failed to add shift: " + error));
+                if (shift) {
+                    eventData.push({ date: dateString, shift: shift });
                 }
             });
+
+            const encodedData = encodeURIComponent(JSON.stringify(eventData));
+            const googleCalendarUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?text=Work+Shift&dates=${encodedData}`;
+            window.open(googleCalendarUrl, "_blank");
         }
     </script>
     <style>
@@ -134,7 +79,6 @@
 </head>
 <body>
     <h1>Select Workdays for This Week</h1>
-    <button onclick="redirectToGoogle()">Sign in & Add Shift</button>
     <div class="calendar"></div>
     <button onclick="submitShifts()">Submit to Google Calendar</button>
 </body>
