@@ -4,97 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift Calendar</title>
-    <script defer>
-        let selectedDays = {};
-        let weekDates = [];
-        const shiftOptions = ["", "15:00-cl", "17:00-cl"];
-
-        document.addEventListener("DOMContentLoaded", () => {
-            generateWeek();
-            document.querySelectorAll(".day").forEach(day => {
-                day.addEventListener("click", () => {
-                    const dayIndex = day.getAttribute("data-index");
-                    selectedDays[dayIndex] = (selectedDays[dayIndex] || 0) + 1;
-                    if (selectedDays[dayIndex] >= shiftOptions.length) {
-                        delete selectedDays[dayIndex];
-                    }
-                    updateDayDisplay(day, dayIndex);
-                });
-            });
-        });
-
-        function updateDayDisplay(day, index) {
-            const shift = shiftOptions[selectedDays[index] || 0];
-            day.classList.toggle("selected", shift !== "");
-            day.querySelector(".timeslot").textContent = shift ? `Shift: ${shift}` : "";
-        }
-
-        function generateWeek() {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const diff = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() - diff);
-
-            const days = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
-            const calendar = document.querySelector(".calendar");
-            calendar.innerHTML = "";
-            weekDates = [];
-
-            days.forEach((day, index) => {
-                const date = new Date(startDate);
-                date.setDate(startDate.getDate() + index);
-                weekDates.push(date.toISOString().split('T')[0]);
-                const dayDiv = document.createElement("div");
-                dayDiv.classList.add("day");
-                dayDiv.setAttribute("data-index", index);
-                dayDiv.innerHTML = `<strong>${day}</strong><br>${date.toDateString()}<br><span class="timeslot"></span>`;
-                calendar.appendChild(dayDiv);
-            });
-        }
-
-        function submitShifts() {
-    Object.keys(selectedDays).forEach(index => {
-        const shift = shiftOptions[selectedDays[index]];
-        const date = new Date(weekDates[index]);
-
-        if (shift) {
-            let [startHour, startMinute] = shift.split("-")[0].split(":").map(Number);
-
-            const endTime = "23:00:00"; // Shift end time remains unchanged
-
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const formattedDate = `${year}${month}${day}`;
-
-            const startTime = `${String(startHour).padStart(2, '0')}${String(startMinute).padStart(2, '0')}00`;
-            const timeZoneOffset = "-0000"; // Keeps it local (prevents UTC shift)
-
-            // Generate the Google Calendar event link with proper timezone
-            const googleCalendarUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?text=Work+Shift&dates=${formattedDate}T${startTime}${timeZoneOffset}/${formattedDate}T230000${timeZoneOffset}`;
-
-            console.log(`Opening Google Calendar for ${formattedDate} - ${startTime}`);
-            window.open(googleCalendarUrl, "_blank");
-        }
-    });
-}
-
-
-
-    </script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .calendar { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 20px; }
-        .day { padding: 15px; border: 1px solid #ccc; cursor: pointer; width: 200px; text-align: center; }
-        .selected { background-color: #4CAF50; color: white; }
-        .timeslot { font-size: 14px; display: block; margin-top: 5px; color: #000; }
-        button { margin-top: 20px; padding: 10px 20px; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
 </head>
 <body>
     <h1>Select Workdays for This Week</h1>
-    <div class="calendar"></div>
-    <button onclick="submitShifts()">Submit to Google Calendar</button>
+    <div class="calendar-container">
+        <div class="calendar"></div>
+        <div class="custom-times"></div>
+    </div>
+    <button onclick="submitShifts()">Submit Selected Shifts</button>
 </body>
 </html>
