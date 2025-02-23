@@ -60,31 +60,32 @@
 
         if (shift) {
             let [startHour, startMinute] = shift.split("-")[0].split(":").map(Number);
-            startMinute = startMinute - 10; // Subtract 10 minutes
+            startMinute -= 10; // Subtract 10 minutes
 
-            if (startMinute < 0) { // Handle cases where it goes negative
+            if (startMinute < 0) {
                 startMinute += 60;
                 startHour -= 1;
             }
 
-            const endTime = "23:00:00"; // Shift end time remains the same
+            const endTime = "23:00:00"; // Shift end time remains unchanged
 
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const formattedDate = `${year}${month}${day}`;
-            
-            // Format adjusted start time properly
-            const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`;
 
-            // Open a new Google Calendar tab for each shift
-            const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=Work+Shift&dates=${formattedDate}T${startTime}/${formattedDate}T${endTime}`;
-            
+            const startTime = `${String(startHour).padStart(2, '0')}${String(startMinute).padStart(2, '0')}00`;
+            const timeZoneOffset = "-0000"; // Keeps it local (prevents UTC shift)
+
+            // Generate the Google Calendar event link with proper timezone
+            const googleCalendarUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?text=Work+Shift&dates=${formattedDate}T${startTime}${timeZoneOffset}/${formattedDate}T230000${timeZoneOffset}`;
+
             console.log(`Opening Google Calendar for ${formattedDate} - ${startTime}`);
             window.open(googleCalendarUrl, "_blank");
         }
     });
 }
+
 
 
     </script>
