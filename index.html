@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Calendar</title>
+    <script defer>
+        let selectedDays = {};
+        let weekDates = [];
+        const shiftOptions = ["", "15:00-cl", "17:00-cl"];
+        const BACKEND_URL = "https://your-backend.com";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            generateWeek();
+            document.querySelectorAll(".day").forEach(day => {
+                day.addEventListener("click", () => {
+                    const dayIndex = day.getAttribute("data-index");
+                    selectedDays[dayIndex] = (selectedDays[dayIndex] || 0) + 1;
+                    if (selectedDays[dayIndex] >= shiftOptions.length) {
+                        delete selectedDays[dayIndex];
+                    }
+                    updateDayDisplay(day, dayIndex);
+                });
+            });
+        });
+
+        function updateDayDisplay(day, index) {
+            const shift = shiftOptions[selectedDays[index] || 0];
+            day.classList.toggle("selected", shift !== "");
+            day.querySelector(".timeslot").textContent = shift ? `Shift: ${shift}` : "";
+        }
+
+        function generateWeek() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const diff = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - diff);
+
+            const days = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+            const calendar = document.querySelector(".calendar");
+            calendar.innerHTML = "";
+            weekDates = [];
+
+            days.forEach((day, index) => {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + index);
+                weekDates.push(date.toISOString().split('T')[0]);
+                const dayDiv = document.createElement("div");
+                dayDiv.classList.add("day");
+                dayDiv.setAttribute("data-index", index);
+                dayDiv.innerHTML = `<strong>${day}</strong><br>${date.toDateString()}<br><span class="timeslot"></span>`;
+                calendar.appendChild(dayDiv);
+            });
+        }
+
+        async function submitShifts() {
+            for (const index in selectedDays) {
+                const shift = shiftOptions[selectedDays[index]];
+                const date = weekDates[index];
+
+                if (!shift) {
+                    // Delete existing shift events
+                    await fetch(`${BACKEND_URL}/delete-shifts`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ date }),
+                    });
+                } else {
+                    // Add new shift event
+                    await fetch(`${BACKEND_URL}/add-shift`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ date, startTime: shift.split("-")[0] }),
+                    });
+                }
+            }
+
+            alert("Shifts updated successfully!");
+        }
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .calendar { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 20px; }
+        .day { padding: 15px; border: 1px solid #ccc; cursor: pointer; width: 200px; text-align: center; }
+        .selected { background-color: #4CAF50; color: white; }
+        .timeslot { font-size: 14px; display: block; margin-top: 5px; color: #000; }
+        button { margin-top: 20px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>Select Workdays for This Week</h1>
+    <div class="calendar"></div>
+    <button onclick="submitShifts()">Submit to Google Calendar</button>
+</body>
+</html>
