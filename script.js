@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
 function generateWeek() {
     const today = new Date();
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (today.getDay() >= 5 ? today.getDay() - 5 : today.getDay() + 2));
+    const dayOfWeek = today.getDay();
+    const daysToFriday = (dayOfWeek <= 5) ? 5 - dayOfWeek : 5 + (7 - dayOfWeek);
+    startDate.setDate(today.getDate() - daysToFriday); // Sets start to the Friday of the current week
 
     const days = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
     const calendar = document.querySelector(".calendar");
