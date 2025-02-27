@@ -9,16 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function generateWeek() {
     const today = new Date();
-    let startDate = new Date(today);
-    
-    // Calculate the start date (Friday of the current or next week)
-    if (today.getDay() >= 5) {
-        // If today is Friday or later (Saturday, Sunday, Monday, etc.), set the start date to next Friday
-        startDate.setDate(today.getDate() + (12 - today.getDay()));  // Next Friday
-    } else {
-        // Otherwise, set the start date to this Friday
-        startDate.setDate(today.getDate() - today.getDay() + 5);  // This Friday
-    }
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - (today.getDay() >= 5 ? today.getDay() - 5 : today.getDay() + 2));
 
     const days = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
     const calendar = document.querySelector(".calendar");
